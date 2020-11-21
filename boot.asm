@@ -297,6 +297,8 @@ Label_Go_On_Loading_File:
 	jmp						Label_Go_On_Loading_File
 
 
+; 此处的 JMP 属于段间地址跳转, 可以从一个段跳转至另一个段地址
+; 因此必须在操作地址中明确指定跳转的目标段和目标段内偏移地址。
 Label_File_Loaded:
 	jmp						BaseOfLoader:OffsetOfLoader
 
