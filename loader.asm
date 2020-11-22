@@ -680,7 +680,8 @@ no_support:
 	jmp					$
 
 
-;=======	read one sector from floppy
+
+; 读取软盘
 [SECTION .s16lib]
 [BITS 16]
 
@@ -710,48 +711,51 @@ Label_Go_On_Reading:
 	pop	bp
 	ret
 
-;=======	get FAT Entry
 
+; 解析 FAT12 文件系统
 Func_GetFATEntry:
 
-	push	es
-	push	bx
-	push	ax
-	mov	ax,	00
-	mov	es,	ax
-	pop	ax
-	mov	byte	[Odd],	0
-	mov	bx,	3
-	mul	bx
-	mov	bx,	2
-	div	bx
-	cmp	dx,	0
-	jz	Label_Even
-	mov	byte	[Odd],	1
+	push				es
+	push				bx
+	push				ax
+	mov					ax,			00
+	mov					es,			ax
+	pop					ax
+	mov					byte		[Odd], 0
+	mov					bx,			3
+	mul					bx
+	mov					bx,			2
+	div					bx
+	cmp					dx,			0
+	jz					Label_Even
+	mov					byte		[Odd], 1
+
+
 
 Label_Even:
 
-	xor	dx,	dx
-	mov	bx,	[BPB_BytesPerSec]
-	div	bx
-	push	dx
-	mov	bx,	8000h
-	add	ax,	SectorNumOfFAT1Start
-	mov	cl,	2
-	call	Func_ReadOneSector
+	xor					dx,			dx
+	mov					bx,			[BPB_BytesPerSec]
+	div					bx
+	push				dx
+	mov					bx,			8000h
+	add					ax,			SectorNumOfFAT1Start
+	mov					cl,			2
+	call				Func_ReadOneSector
 	
-	pop	dx
-	add	bx,	dx
-	mov	ax,	[es:bx]
-	cmp	byte	[Odd],	1
-	jnz	Label_Even_2
-	shr	ax,	4
+	pop					dx
+	add					bx,			dx
+	mov					ax,			[es:bx]
+	cmp					byte		[Odd], 1
+	jnz					Label_Even_2
+	shr					ax,			4
 
 Label_Even_2:
-	and	ax,	0FFFh
-	pop	bx
-	pop	es
+	and					ax,			0FFFh
+	pop					bx
+	pop					es
 	ret
+
 
 
 ; 显示 16 进制数
