@@ -188,40 +188,68 @@ Label_Start:
 
 Lable_Search_In_Root_Dir_Begin:
 
-	cmp					word		[RootDirSizeForLoop],0
+	cmp					word		[RootDirSizeForLoop], 0
+
+	; 如果搜索完了所有的扇区, 仍然没有找到, 则在屏幕上输出提示信息
 	jz					Label_No_LoaderBin
+
 	dec					word		[RootDirSizeForLoop]
+
+
+
+	; Func_ReadOneSector : 读取一个扇区
+	; 	入参 :
+	;			AX : 待读取对磁盘起始扇区号
+	;			CL : 读入的扇区数量
+	; 	出参 : 目标缓冲区起始地址
+	;			ES:BX
+
+	; 设置缓冲区起始地址为 00h
 	mov					ax,			00h
 	mov					es,			ax
+	; 设置缓冲区结束地址
 	mov					bx,			8000h
+	; 设置读取磁盘起始扇区号
 	mov					ax,			[SectorNo]
+	; 设置要读取的扇区长度为 1
 	mov					cl,			1
+	; 读取一个扇区
 	call				Func_ReadOneSector
+
 	mov					si,			LoaderFileName
 	mov					di,			8000h
 	cld
 	mov					dx,			10h
 
+
+
 Label_Search_For_LoaderBin:
 
 	cmp					dx,			0
 	jz					Label_Goto_Next_Sector_In_Root_Dir
+
 	dec					dx
 	mov					cx,			11
+
+
 
 Label_Cmp_FileName:
 	cmp					cx,			0
 	jz					Label_FileName_Found
 	dec					cx
 	lodsb
-	cmp					al,	byte	[es:di]
+	cmp					al, byte	[es:di]
 	jz					Label_Go_On
 	jmp					Label_Different
+
+
 
 Label_Go_On:
 
 	inc					di
 	jmp					Label_Cmp_FileName
+
+
 
 Label_Different:
 	and					di,			0ffe0h
@@ -229,8 +257,9 @@ Label_Different:
 	mov					si,			LoaderFileName
 	jmp					Label_Search_For_LoaderBin
 
-Label_Goto_Next_Sector_In_Root_Dir:
 
+
+Label_Goto_Next_Sector_In_Root_Dir:
 	add					word		[SectorNo],	1
 	jmp					Lable_Search_In_Root_Dir_Begin
 
@@ -239,17 +268,17 @@ Label_Goto_Next_Sector_In_Root_Dir:
 ; 未搜索到 loader 程序时, 在屏幕上输出错误信息
 Label_No_LoaderBin:
 
-	mov	ax,	1301h
-	mov	bx,	008ch
-	mov	dx,	0100h
-	mov	cx,	21
-	push	ax
-	mov	ax,	ds
-	mov	es,	ax
-	pop	ax
-	mov	bp,	NoLoaderMessage
-	int	10h
-	jmp	$
+	mov					ax,			1301h
+	mov					bx,			008ch
+	mov					dx,			0100h
+	mov					cx,			21
+	push				ax
+	mov					ax,			ds
+	mov					es,			ax
+	pop					ax
+	mov					bp,			NoLoaderMessage
+	int					10h
+	jmp					$
 
 
 ; 将 loader.bin 加载到内存中
@@ -266,6 +295,8 @@ Label_FileName_Found:
 	mov						es,			ax
 	mov						bx,			OffsetOfLoader
 	mov						ax,			cx
+
+
 
 Label_Go_On_Loading_File:
 	; 在屏幕上显示一个点
@@ -314,14 +345,14 @@ Label_File_Loaded:
 Func_ReadOneSector:
 	; Func_ReadOneSector : 读取一个扇区
 	; 入参 :
-	;		AX : 待读取对磁盘其实扇区号
+	;		AX : 待读取对磁盘起始扇区号
 	;		CL : 读入的扇区数量
 	; 出参 : 目标缓冲区起始地址
 	;		ES:BX
 	push				bp
 	mov					bp,				sp
 	sub					esp,			2
-	mov					byte			[bp-2],cl
+	mov					byte			[bp-2], cl
 	push				bx
 	mov					bl,				[BPB_SecPerTrk]
 	div					bl
@@ -333,6 +364,8 @@ Func_ReadOneSector:
 	and					dh,				1
 	pop					bx
 	mov					dl,				[BS_DrvNum]
+
+
 
 Label_Go_On_Reading:
 	mov					ah,				2
