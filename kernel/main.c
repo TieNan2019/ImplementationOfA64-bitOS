@@ -45,6 +45,9 @@ void Start_Kernel(void)
 		addr +=1;
 	}
 
+	// 用于触发异常的代码
+	i = 1 / 0;
+
 	while(1)
 		;
 }
