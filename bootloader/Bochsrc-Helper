@@ -1,0 +1,131 @@
+1. 安装Bochs
+$ sudo apt-get install bochs
+
+2. 修改配置文件
+$ cp /etc/bochs-init/bochsrc ./
+$ vi bochsrc
+
+因为我是用Bochs来调试boot.s(操作系统启动代码)，所以要用软盘做启动盘，所以我做如下改动：
+
+floppya: 1_44=/dev/fd0, status=inserted
+
+改成
+
+floppya: 1_44=a.img, status=inserted
+
+其中，a.img是我的软盘镜像文件。如何制作，我会在下一篇中介绍。
+
+boot: c
+
+改成
+
+boot: a
+
+a盘即软盘启动
+
+ips:1000000
+
+改成
+
+cpu: count=1, ips=1000000
+
+不知为什么，Bochs说不认识ips:1000000，根据官网上的写法，改成这样就可以了。
+
+floppy_command_delay: 500
+
+改成
+
+#floppy_command_delay: 500
+
+Bochs竟然说不认识这个指令！不管他，直接注释掉。
+
+usbl: enabled=1, ioaddr=0xFF80, irq=10
+
+改成
+
+＃usbl: enabled=1, ioaddr=0xFF80, irq=10
+
+理由同上。
+
+3. 制作软盘镜像
+这个我会在下一篇中介绍。
+
+4. 启动
+$ bochs -q -f bochsrc
+
+注意：bochsrc在当前路径下
+
+5. 出现的一些问题及解决办法
+00000000000p[     ] >>PANIC<< dlopen failed for module 'sdl': file not found
+========================================================================
+Event type: PANIC
+Device: [     ]
+Message: dlopen failed for module 'sdl': file not found
+
+解决办法：
+
+$ sudo apt-get install bochs-sdl
+
+ 
+
+00000000000i[MEM0 ] allocated memory at 0xb47a3008. after alignment, vector=0xb47a4000
+00000000000i[MEM0 ] 32.00MB
+00000000000p[MEM0 ] >>PANIC<< ROM: System BIOS must end at 0xfffff
+========================================================================
+Event type: PANIC
+Device: [MEM0 ]
+Message: ROM: System BIOS must end at 0xfffff
+
+解决办法：
+
+修改配置文件
+
+$ vi bochsrc
+
+romimage: file=/usr/share/bochs/BIOS-bochs-latest, address=0xf0000
+
+改成
+
+romimage: file=/usr/share/bochs/BIOS-bochs-latest
+
+原因：
+
+在2.2.5以前的版本，Bochs的BIOS大小为64K，需要指定起始地址为0xf0000。之后的版本可支持512K的BIOS镜像。现在默认用的BIOS-bochs-latest的好像是128K（官方说法），我看了一下是132K。反正不需要指定起始地址了。
+
+ 
+
+00000000000i[PAR  ] parallel port 1 at 0x0378 irq 7
+00000000000p[PAR  ] >>PANIC<< Could not open '/dev/lp0' to write parport1 output
+========================================================================
+Event type: PANIC
+Device: [PAR  ]
+Message: Could not open '/dev/lp0' to write parport1 output
+
+解决办法：
+
+编辑配置文件
+
+parport1: enabled=1, file="/dev/lp0"
+
+改成
+parport1: enabled=1, file="parport.out"
+
+或直接在行首加#注释掉。这个是并口设备，一般给打印机用。修改后，会把发往并口的数据写到parport.out里。
+
+ 
+
+启动后程序进入死循环，鼠标键盘都无法响应
+
+解决办法：
+
+按Ctrl＋Alt＋F1，启动另一个tty,以root身份登录，然后
+
+#top
+
+在列表中找到进程bochs-bin的PID，按k，输入那个PID直，回车，再按q退出；
+
+#exit
+
+退出root，按Ctrl＋Alt＋F7（也可能是别的，挨个试）回到原来的用户，此时Bochs已被关闭。
+
+如果Ctrl＋Alt＋F1不好使，那就想别的方法（比如远程）登录到你的机器，执行相同的操作。
